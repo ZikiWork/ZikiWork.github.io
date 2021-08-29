@@ -4,6 +4,32 @@
   
   
   <entry>
+    <title>查找元素的第一个和最后一个元素</title>
+    <link href="/2021/08/29/%E6%9F%A5%E6%89%BE%E5%85%83%E7%B4%A0%E7%9A%84%E7%AC%AC%E4%B8%80%E4%B8%AA%E5%92%8C%E6%9C%80%E5%90%8E%E4%B8%80%E4%B8%AA%E5%85%83%E7%B4%A0/"/>
+    <url>/2021/08/29/%E6%9F%A5%E6%89%BE%E5%85%83%E7%B4%A0%E7%9A%84%E7%AC%AC%E4%B8%80%E4%B8%AA%E5%92%8C%E6%9C%80%E5%90%8E%E4%B8%80%E4%B8%AA%E5%85%83%E7%B4%A0/</url>
+    
+    <content type="html"><![CDATA[<h2 id="在排序数组中查找元素的第一个和最后一个位置"><a href="#在排序数组中查找元素的第一个和最后一个位置" class="headerlink" title="在排序数组中查找元素的第一个和最后一个位置"></a>在排序数组中查找元素的第一个和最后一个位置</h2>]]></content>
+    
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>最长有效括号</title>
+    <link href="/2021/08/29/%E6%9C%80%E9%95%BF%E6%9C%89%E6%95%88%E6%8B%AC%E5%8F%B7/"/>
+    <url>/2021/08/29/%E6%9C%80%E9%95%BF%E6%9C%89%E6%95%88%E6%8B%AC%E5%8F%B7/</url>
+    
+    <content type="html"><![CDATA[<h2 id="最长有效括号"><a href="#最长有效括号" class="headerlink" title="最长有效括号"></a>最长有效括号</h2><p>给你一个只包含 <code>&#39;(&#39;</code> 和 <code>&#39;)&#39;</code> 的字符串，找出最长有效（格式正确且连续）括号子串的长度。</p><h3 id="提示："><a href="#提示：" class="headerlink" title="提示："></a>提示：</h3><ul><li><code>0 &lt;= s.length &lt;= 3 * 104</code></li><li><code>s[i]</code> 为 <code>&#39;(&#39;</code> 或 <code>&#39;)&#39;</code></li></ul><figure class="highlight pgsql"><table><tr><td class="gutter hljs"><div class="hljs code-wrapper"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></div></td><td class="code"><div class="hljs code-wrapper"><pre><code class="hljs pgsql"><span class="hljs-keyword">class</span> Solution &#123;<br>    <span class="hljs-built_in">public</span> <span class="hljs-type">int</span> longestValidParentheses(String s) &#123;<br>        Stack&lt;<span class="hljs-type">Integer</span>&gt; st = <span class="hljs-built_in">new</span> Stack&lt;<span class="hljs-type">Integer</span>&gt;();<br>        <span class="hljs-type">int</span> ans = <span class="hljs-number">0</span>;<br>        <span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = <span class="hljs-number">0</span> ,start = <span class="hljs-number">0</span>;i &lt; s.length();i ++)<br>        &#123;<br>            <span class="hljs-keyword">if</span>( s.charAt(i) == <span class="hljs-string">&#x27;(&#x27;</span>) st.<span class="hljs-keyword">add</span>(i);<br>            <span class="hljs-keyword">else</span><br>            &#123;<br>                <span class="hljs-keyword">if</span>(!st.isEmpty()) <br>                &#123;<br>                    st.pop();<br>                    <span class="hljs-keyword">if</span>(st.isEmpty()) ans = Math.max(ans,i - <span class="hljs-keyword">start</span> + <span class="hljs-number">1</span>);<br>                    <span class="hljs-keyword">else</span> ans = Math.max(ans,i - st.peek());<br>                &#125;<br>                <span class="hljs-keyword">else</span> start = i + <span class="hljs-number">1</span>;<br>            &#125;<br>        &#125;<br>        <span class="hljs-keyword">return</span> ans;<br>    &#125;<br>&#125;<br></code></pre></div></td></tr></table></figure><h3 id="具体过程如下："><a href="#具体过程如下：" class="headerlink" title="具体过程如下："></a>具体过程如下：</h3><ul><li><p>用栈维护当前待匹配的左括号的位置，同时用 start 记录一个新的可能合法的子串的起始位置，初始设为0。</p></li><li><p>如果s[i] ==’(‘，那么把i进栈。</p></li><li><p>如果s[i] == ‘)’,那么弹出栈顶元素 （代表栈顶的左括号匹配到了右括号），出栈后：</p></li></ul><p>如果栈为空，说明以当前右括号为右端点的合法括号序列的左端点为start，则更新答案 i - start + 1。</p><p>如果栈不为空，说明以当前右括号为右端点的合法括号序列的左端点为栈顶元素的下一个元素，则更新答案i - st.top() 。</p><p><img src="https://pic.leetcode-cn.com/1628390397-QMdXtd-file_1628390396777" srcset="/img/loading.gif" lazyload alt="https://pic.leetcode-cn.com/1628390397-QMdXtd-file_1628390396777"></p><ul><li><p>遇到右括号)且当前栈为空，则当前的 start 开始的子串不再可能为合法子串了，下一个合法子串的起始位置是 i + 1，更新 start = i + 1。</p></li><li><p>最后返回答案。</p></li></ul><p>实现细节： 栈保存的是下标。</p><h3 id="复杂度分析"><a href="#复杂度分析" class="headerlink" title="复杂度分析"></a>复杂度分析</h3><ul><li><p>时间复杂度： O(n)O(n)，nn 是给定字符串的长度。我们只需要遍历字符串一次即可。</p></li><li><p>空间复杂度： O(n)O(n)。栈的大小在最坏情况下会达到 nn，因此空间复杂度为 O(n)O(n) 。</p></li></ul><hr><p>作者：LeetCode-Solution<br>链接：<a href="https://leetcode-cn.com/problems/longest-valid-parentheses/">32. 最长有效括号 - 力扣（LeetCode） (leetcode-cn.com)</a><br>来源：力扣（LeetCode）<br>著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。</p>]]></content>
+    
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>Stream ToMap(Collectors.toMap)</title>
     <link href="/2021/08/29/Stream%20ToMap(Collectors.toMap)/"/>
     <url>/2021/08/29/Stream%20ToMap(Collectors.toMap)/</url>
