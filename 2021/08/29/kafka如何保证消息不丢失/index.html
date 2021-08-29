@@ -1,0 +1,556 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=&#34;auto&#34;>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="Ziki">
+  <meta name="keywords" content="">
+  <meta name="description" content="前言kafka对于消息的可靠性保证。作为消息组件，保证消息不丢失，是非常重要的。 那么kafka是如何保证消息不丢失的呢？  前提条件任何消息组件不丢数据都是在特定场景下一定条件的，kafka要保证消息不丢，有两个核心条件。 第一.必须是已提交的消息即committed messagekafka对于committed message的定义是，生产者提交消息到broker，并等到多个broker确认">
+<meta property="og:type" content="article">
+<meta property="og:title" content="kafka如何保证消息不丢失">
+<meta property="og:url" content="https://zikiwork.github.io/2021/08/29/kafka%E5%A6%82%E4%BD%95%E4%BF%9D%E8%AF%81%E6%B6%88%E6%81%AF%E4%B8%8D%E4%B8%A2%E5%A4%B1/index.html">
+<meta property="og:site_name" content="ZikiWork">
+<meta property="og:description" content="前言kafka对于消息的可靠性保证。作为消息组件，保证消息不丢失，是非常重要的。 那么kafka是如何保证消息不丢失的呢？  前提条件任何消息组件不丢数据都是在特定场景下一定条件的，kafka要保证消息不丢，有两个核心条件。 第一.必须是已提交的消息即committed messagekafka对于committed message的定义是，生产者提交消息到broker，并等到多个broker确认">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2021-08-29T08:02:34.000Z">
+<meta property="article:modified_time" content="2021-08-29T10:06:54.152Z">
+<meta property="article:author" content="Ziki">
+<meta name="twitter:card" content="summary_large_image">
+  
+  <title>kafka如何保证消息不丢失 - ZikiWork</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4.0.0/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10.7.2/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+  
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"zikiwork.github.io","root":"/","version":"1.8.11","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":true,"offset_factor":2},"web_analytics":{"enable":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Ziki Work</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                Home
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                Archives
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                Categories
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                Tags
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                About
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                Links
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="kafka如何保证消息不丢失">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      Ziki
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2021-08-29 16:02" pubdate>
+        August 29, 2021 pm
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      4.4k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      14 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- 不蒜子统计文章PV -->
+      <span id="busuanzi_container_page_pv" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="busuanzi_value_page_pv"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">kafka如何保证消息不丢失</h1>
+            
+              <p class="note note-info">
+                
+                  本文最后更新于：10 minutes ago
+                
+              </p>
+            
+            <div class="markdown-body">
+              <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>kafka对于消息的可靠性保证。作为消息组件，保证消息不丢失，是非常重要的。</p>
+<p>那么kafka是如何保证消息不丢失的呢？</p>
+<hr>
+<h2 id="前提条件"><a href="#前提条件" class="headerlink" title="前提条件"></a>前提条件</h2><p>任何消息组件不丢数据都是在特定场景下一定条件的，<code>kafka</code>要保证消息不丢，有两个核心条件。</p>
+<h3 id="第一-必须是已提交的消息即committed-message"><a href="#第一-必须是已提交的消息即committed-message" class="headerlink" title="第一.必须是已提交的消息即committed message"></a>第一.必须是已提交的消息即committed message</h3><p><code>kafka</code>对于<code>committed message</code>的定义是，生产者提交消息到<code>broker</code>，并等到多个<code>broker</code>确认并返回给生产者已提交的确认信息。而这<code>多个broker</code>是由我们自己来定义的，可以选择只要有一个<code>broker</code>成功保存该消息就算是已提交，也可以是令所有<code>broker</code>都成功保存该消息才算是已提交。不论哪种情况，<code>kafka</code>只对已提交的消息做持久化保证。</p>
+<h3 id="第二-N-个broker中至少有-1-个存活"><a href="#第二-N-个broker中至少有-1-个存活" class="headerlink" title="第二.N 个broker中至少有 1 个存活"></a>第二.N 个<code>broker</code>中至少有 1 个存活</h3><p>虽然<code>kafka</code>集群是分布式的，但也必须保证有足够<code>broker</code>正常工作，才能对消息做持久化做保证。也就是说 <code>kafka</code>不丢消息是有前提条件的，假如你的消息保存在 N 个<code>kafka broker</code>上，那么这个前提条件就是这 N 个<code>broker</code>中至少有 1 个存活。只要此条件成立，<code>kafka</code>就能保证你的这条消息永远不会丢失。</p>
+<h2 id="如何保证消息不丢"><a href="#如何保证消息不丢" class="headerlink" title="如何保证消息不丢"></a>如何保证消息不丢</h2><p>一条消息从产生，到发送到<code>kafka</code>保存，到被取出消费，会有多个场景和流程阶段，很可能会出现丢失情况，上文描述了消息丢失的几种情况，下面简单介绍下如何保证消息不丢失。</p>
+<h3 id="生产端"><a href="#生产端" class="headerlink" title="生产端"></a>生产端</h3><p><code>Producer</code>端可能会丢失消息。目前<code>Kafka Producer</code>是异步发送消息的，也就是说如果你调用的是<code>producer.send(msg)</code>这个<code>API</code>，那么它通常会立即返回，但此时你不保证消息发送已成功完成。可能会出现：网络抖动，导致消息压根就没有发送到<code>Broker</code>端；或者消息本身不合规导致<code>Broker</code>拒绝接收（比如消息太大了，超过了<code>Broker</code>的限制）。</p>
+<p>使用<code>producer.send(msg, callback)</code>接口就能避免这个问题，根据回调，一旦出现消息提交失败的情况，就可以有针对性地进行处理。如果是因为那些瞬时错误，<code>Producer</code>重试就可以了；如果是消息不合规造成的，那么调整消息格式后再次发送。总之，处理发送失败的责任在<code>Producer</code>端而非<code>Broker</code>端。当然，如果此时<code>broker</code>宕机，那就另当别论。</p>
+<h3 id="1-send-msg-callback"><a href="#1-send-msg-callback" class="headerlink" title="1.send(msg, callback)"></a>1.send(msg, callback)</h3><p>可以从<code>callback</code>回调中得到该条消息的发送结果，并且<code>callback</code>是异步回调，所以在兼具性能的情况下，也对消息具有比较好的掌控。</p>
+<figure class="highlight java"><table><tr><td class="gutter hljs"><div class="hljs code-wrapper"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></div></td><td class="code"><div class="hljs code-wrapper"><pre><code class="hljs java">ProducerRecord&lt;<span class="hljs-keyword">byte</span>[],<span class="hljs-keyword">byte</span>[]&gt; record = <span class="hljs-keyword">new</span> ProducerRecord&lt;<span class="hljs-keyword">byte</span>[],<span class="hljs-keyword">byte</span>[]&gt;(<span class="hljs-string">&quot;the-topic&quot;</span>, key, value);<br>producer.send(myRecord,<br>          <span class="hljs-keyword">new</span> Callback() &#123;<br>              <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">onCompletion</span><span class="hljs-params">(RecordMetadata metadata, Exception e)</span> </span>&#123;<br>                  <span class="hljs-keyword">if</span>(e != <span class="hljs-keyword">null</span>) &#123;<br>                     e.printStackTrace();<br>                  &#125; <span class="hljs-keyword">else</span> &#123;<br>                     System.out.println(<span class="hljs-string">&quot;The offset of the record we just sent is: &quot;</span> + metadata.offset());<br>                  &#125;<br>              &#125;<br>          &#125;);<br></code></pre></div></td></tr></table></figure>
+
+<p>当我们通过  <code>send(msg, callback)</code> 是不是就意味着消息一定不丢失了呢？<br>答案明显是：不是!</p>
+<p>我们接着上面，<code>send(msg, callback)</code>里面 <code>callback</code>返回的成功，</p>
+<p>到底是不是真的确保消息万无一失了？答案是否定的！</p>
+<h3 id="2-request-required-acks-参数"><a href="#2-request-required-acks-参数" class="headerlink" title="2.request.required.acks 参数"></a>2.request.required.acks 参数</h3><p>还需要通过 <code>request.required.acks </code>参数来设置数据可靠性的级别！</p>
+<figure class="highlight java"><table><tr><td class="gutter hljs"><div class="hljs code-wrapper"><pre><span class="line">1</span><br></pre></div></td><td class="code"><div class="hljs code-wrapper"><pre><code class="hljs java">props.put(<span class="hljs-string">&quot;acks&quot;</span>, <span class="hljs-string">&quot;all&quot;</span>);<span class="hljs-comment">//或者-1</span><br></code></pre></div></td></tr></table></figure>
+
+<ul>
+<li>1（默认）：这意味着 producer 在 <code>ISR副本同步队列</code>中的 leader 已成功收到的数据并得到确认后发送下一条 message。如果 leader 宕机了，则会丢失数据。</li>
+<li>0：这意味着 producer 无需等待来自 broker 的确认而继续发送下一批消息。这种情况下数据传输效率最高，但是数据可靠性确是最低的。</li>
+<li>-1：producer 需要等待 ISR 中的所有 follower都确认接收到数据后才算一次发送完成，可靠性最高。<strong>但是这样也不能保证数据不丢失</strong>，比如当 ISR 中只有 leader时（ISR 中的成员由于某些情况会增加也会减少，最少就只剩一个 leader），这样就变成了 acks=1 的情况。</li>
+</ul>
+<p>如果要提高数据的可靠性，在设置 <code>request.required.acks=-1</code> 的同时，也要设置最小写入副本数的个数<code>min.insync.replicas</code> 参数 (可以在<code>broker</code>或者 <code>topic</code> 层面进行设置) 的配合，这样才能发挥最大的功效。</p>
+<p><code>min.insync.replicas</code> 这个参数设定 <code>ISR</code> 中的最小副本数是多少，默认值为 1，当且仅当 <code>request.required.acks</code> 参数设置为 -1 时，此参数才生效。</p>
+<p>如果 ISR 中的副本数少于 <code>min.insync.replicas</code> 配置的数量时，客户端会返回异常：org.apache.kafka.common.errors.NotEnoughReplicasExceptoin: Messages are rejected since there are fewer in-sync replicas than required。</p>
+<h3 id="Broker-端的配置"><a href="#Broker-端的配置" class="headerlink" title="Broker 端的配置"></a>Broker 端的配置</h3><p>其实到这里，生产者端基本已经做好了数据不丢失的大部分准备，但是有些东西是要配合Broker 端一起，才能达到预期的不丢失数据的， 比如上面说到的</p>
+<ul>
+<li><p><code>min.insync.replicas</code> 配置<br>我们上面知道，当 生产者 <code>acks = -1</code> 的时候，写入的副本数就必须 &gt;= <code>min.insync.replicas</code> 数，<br>当达不到这个要求的时候，生产者端会收到一个<code>either NotEnoughReplicas or NotEnoughReplicasAfterAppend</code>的异常。</p>
+<p>所以我们这个<code>min.insync.replicas</code>参数必须不能大于数据冗余备份数 <code>replication.factor</code> 。否则生产者将无法写入任何数据，一般建议 <code>replication.factor</code> 数要大于 <code>min.insync.replicas</code>，比如3个机器的集群，设置 <code>replication.factor</code> = 3，那么设置 <code>min.insync.replicas</code> = 2 即可，这样既保证了数据write的时候有一个副本的冗余，也能保证在一些情况下，某台Broker宕机导致数据无法达到3个副本时，依然可以正常write数据。</p>
+</li>
+<li><p><code>unclean.leader.election.enable</code><br>这里 Broker 端还有一个重要的配置就是 <code>unclean.leader.election.enable = false</code><br>这个配置代表着一些数据落后比较多的 follower，是否能在leader宕机后被选举成新的 leader，如果你设置成 true，很明显，如果这样的follower成为新leader，就会造成最新的一部分数据丢失掉，</p>
+</li>
+</ul>
+<h3 id="消费端"><a href="#消费端" class="headerlink" title="消费端"></a>消费端</h3><p><code>Consumer</code>端丢数据的情况稍微复杂些。<code>Consumer</code>”位移“(<code>offset</code>)，表示<code>Consumer</code>当前消费到<code>topic</code>分区的哪个位置。</p>
+<p><code>kafka</code>通过先消费消息，后更新<code>offset</code>，来保证消息不丢失。但是这样可能会出现消息重复的情况，具体如何保证<code>only-once</code>,前文已提到过。</p>
+<p>当我们<code>consumer</code>端开启多线程异步去消费时，情况又会变得复杂一些。此时<code>consumer</code>自动地向前更新<code>offset</code>，假如其中某个线程运行失败了，它负责的消息没有被成功处理，但位移已经被更新了，因此这条消息对于<code>consumer</code>而言实际上是丢失了。</p>
+<p>这里的关键就在自动提交<code>offset</code>，如何真正地确认消息是否真的被消费，再进行更新<code>offset</code>。此问题的解决方式：如果是多线程异步处理消费消息，<code>consumer</code>不要开启自动提交<code>offset</code>，<code>consumer</code>端程序自己来处理<code>offset</code>的提交更新。</p>
+<h2 id="实践配置"><a href="#实践配置" class="headerlink" title="实践配置"></a>实践配置</h2><p>最后分享下<code>kafka</code>无消息丢失配置：</p>
+<ul>
+<li><code>producer</code>端使用<code>producer.send(msg, callback)</code>带有回调的<code>send</code>方法。</li>
+<li>设置<code>acks = all</code>。<code>acks</code>是<code>Producer</code>的一个参数，代表“已提交”消息的定义。如果设置成<code>all</code>，则表明所有<code>Broker</code>都要接收到消息，该消息才算是“已提交”。</li>
+<li>设置<code>retries</code>为一个较大的值。同样是<code>Producer</code>的参数。当出现网络抖动时，消息发送可能会失败，此时配置了<code>retries</code>的<code>Producer</code>能够自动重试发送消息，尽量避免消息丢失。</li>
+<li>设置<code>unclean.leader.election.enable = false</code>。这是<code>Broker</code>端的参数，在<code>kafka</code>版本迭代中社区也多次反复修改过他的默认值，之前比较具有争议。它控制哪些<code>Broker</code>有资格竞选分区的<code>Leader</code>。如果一个<code>Broker</code>落后原先的<code>Leader</code>太多，那么它一旦成为新的<code>Leader</code>，将会导致消息丢失。故一般都要将该参数设置成<code>false</code>！！！</li>
+<li>设置<code>replication.factor &gt;= 3</code>。这也是<code>Broker</code>端的参数。保存多份消息冗余。</li>
+<li>设置<code>min.insync.replicas &gt; 1</code>。<code>Broker</code>端参数，控制消息至少要被写入到多少（一个以上）个副本才算是“已提交”。设置成大于 1 可以提升消息持久性。在生产环境中不要使用默认值 1 ！！！确保<code>replication.factor &gt; min.insync.replicas</code>。如果两者相等，那么只要有一个副本离线，整个分区就无法正常工作了。推荐设置成<code>replication.factor = min.insync.replicas + 1</code>。</li>
+<li>确保消息消费完成再提交。<code>Consumer</code>端有个参数<code>enable.auto.commit</code>，最好设置成<code>false</code>，并自己来处理<code>offset</code>的提交更新。</li>
+</ul>
+<hr>
+<p>参考文献</p>
+<ul>
+<li><p><a target="_blank" rel="noopener" href="https://kafka.apache.org/documentation/#clientconfig">Apache Kafka</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://www.zhouyuxin.net/article/137">kafka 如何解决消息队列重复消费 (zhouyuxin.net)</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://www.infoq.cn/article/depth-interpretation-of-kafka-data-reliability">Kafka数据可靠性深度解读-InfoQ</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/article/1589157">kafka是如何保证消息不丢失的 - 云+社区 - 腾讯云 (tencent.com)</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/4e6f01b4259d">Kafka保证消息不丢失不重复 - 简书 (jianshu.com)</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/68c173e4c549">Kafka ——如何保证消息不会丢失 - 简书 (jianshu.com)</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/gaopengpy/p/13516216.html">kafka如何保证消息队列不丢失? - gaopengpy - 博客园 (cnblogs.com)</a></p>
+</li>
+</ul>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2021/08/29/Stream%20ToMap(Collectors.toMap)/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Stream ToMap(Collectors.toMap)</span>
+                        <span class="visible-mobile">Previous</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/08/29/helloWorld/">
+                        <span class="hidden-mobile">Hello World</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+              <!-- Comments -->
+              <article class="comments" id="comments">
+                
+                  
+                
+                
+
+              </article>
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;TOC</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  
+    
+      <script  src="/js/img-lazyload.js" ></script>
+    
+  
+
+
+
+  
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/tocbot@4.12.3/dist/tocbot.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4.3.1/anchor.min.js" ></script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js" ></script>
+
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>
