@@ -16,21 +16,25 @@
   <meta name="description" content="">
   <meta name="author" content="Ziki">
   <meta name="keywords" content="">
-  <meta name="description" content="最长有效括号给你一个只包含 &#39;(&#39; 和 &#39;)&#39; 的字符串，找出最长有效（格式正确且连续）括号子串的长度。 提示： 0 &lt;&#x3D; s.length &lt;&#x3D; 3 * 104 s[i] 为 &#39;(&#39; 或 &#39;)&#39;  123456789101112131415161718192021class Solution &amp;#123;    publ">
+  <meta name="description" content="分布式Session实现方式： 1.客户端存储(基于Cookie管理) 这种方式每次发起请求的时候都需要将Session数据放到Cookie中传递给服务端。  优点：不需要依赖额外外部存储，不需要额外配置。  缺点：不安全，易被盗取或篡改；Cookie数量和长度有限制，需要消耗更多网络带宽。  适用场景：数据不重要、不敏感且数据量小的情况。    2.Session复制在支持Session复制的">
 <meta property="og:type" content="article">
-<meta property="og:title" content="最长有效括号">
-<meta property="og:url" content="https://zikiwork.github.io/2021/08/29/%E6%9C%80%E9%95%BF%E6%9C%89%E6%95%88%E6%8B%AC%E5%8F%B7/index.html">
+<meta property="og:title" content="管理分布式Session的几种方式">
+<meta property="og:url" content="https://zikiwork.github.io/2022/03/17/%E7%AE%A1%E7%90%86%E5%88%86%E5%B8%83%E5%BC%8FSession%E7%9A%84%E5%87%A0%E7%A7%8D%E6%96%B9%E5%BC%8F/index.html">
 <meta property="og:site_name" content="Ziki Work">
-<meta property="og:description" content="最长有效括号给你一个只包含 &#39;(&#39; 和 &#39;)&#39; 的字符串，找出最长有效（格式正确且连续）括号子串的长度。 提示： 0 &lt;&#x3D; s.length &lt;&#x3D; 3 * 104 s[i] 为 &#39;(&#39; 或 &#39;)&#39;  123456789101112131415161718192021class Solution &amp;#123;    publ">
+<meta property="og:description" content="分布式Session实现方式： 1.客户端存储(基于Cookie管理) 这种方式每次发起请求的时候都需要将Session数据放到Cookie中传递给服务端。  优点：不需要依赖额外外部存储，不需要额外配置。  缺点：不安全，易被盗取或篡改；Cookie数量和长度有限制，需要消耗更多网络带宽。  适用场景：数据不重要、不敏感且数据量小的情况。    2.Session复制在支持Session复制的">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="https://pic.leetcode-cn.com/1628390397-QMdXtd-file_1628390396777">
-<meta property="article:published_time" content="2021-08-29T13:20:25.000Z">
-<meta property="article:modified_time" content="2021-08-29T13:50:16.004Z">
+<meta property="og:image" content="https://gitee.com/Ziki_zhouyuxin/ArticleImages/raw/master/202201272149848.png">
+<meta property="og:image" content="https://gitee.com/Ziki_zhouyuxin/ArticleImages/raw/master/20210530174912.png">
+<meta property="og:image" content="https://gitee.com/Ziki_zhouyuxin/ArticleImages/raw/master/20210530174915.png">
+<meta property="og:image" content="https://gitee.com/Ziki_zhouyuxin/ArticleImages/raw/master/20210530174917.png">
+<meta property="article:published_time" content="2022-03-16T16:07:10.000Z">
+<meta property="article:modified_time" content="2022-03-16T16:15:52.876Z">
 <meta property="article:author" content="Ziki">
+<meta property="article:tag" content="Session">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://pic.leetcode-cn.com/1628390397-QMdXtd-file_1628390396777">
+<meta name="twitter:image" content="https://gitee.com/Ziki_zhouyuxin/ArticleImages/raw/master/202201272149848.png">
   
-  <title>最长有效括号 - Ziki Work</title>
+  <title>管理分布式Session的几种方式 - Ziki Work</title>
 
   <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" />
 
@@ -189,7 +193,7 @@
       <div class="full-bg-img">
         <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
           <div class="page-header text-center fade-in-up">
-            <span class="h2" id="subtitle" title="最长有效括号">
+            <span class="h2" id="subtitle" title="管理分布式Session的几种方式">
               
             </span>
 
@@ -204,8 +208,8 @@
   
     <span class="post-meta">
       <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-      <time datetime="2021-08-29 21:20" pubdate>
-        August 29, 2021 pm
+      <time datetime="2022-03-17 00:07" pubdate>
+        March 17, 2022 am
       </time>
     </span>
   
@@ -215,7 +219,7 @@
   
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      1k 字
+      1.3k 字
     </span>
   
 
@@ -224,7 +228,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      3 分钟
+      4 分钟
     </span>
   
 
@@ -261,50 +265,85 @@
         <div class="py-5" id="board">
           <article class="post-content mx-auto">
             <!-- SEO header -->
-            <h1 style="display: none">最长有效括号</h1>
+            <h1 style="display: none">管理分布式Session的几种方式</h1>
             
             <div class="markdown-body">
-              <h2 id="最长有效括号"><a href="#最长有效括号" class="headerlink" title="最长有效括号"></a>最长有效括号</h2><p>给你一个只包含 <code>&#39;(&#39;</code> 和 <code>&#39;)&#39;</code> 的字符串，找出最长有效（格式正确且连续）括号子串的长度。</p>
-<h3 id="提示："><a href="#提示：" class="headerlink" title="提示："></a>提示：</h3><ul>
-<li><code>0 &lt;= s.length &lt;= 3 * 104</code></li>
-<li><code>s[i]</code> 为 <code>&#39;(&#39;</code> 或 <code>&#39;)&#39;</code></li>
-</ul>
-<figure class="highlight pgsql"><table><tr><td class="gutter hljs"><div class="hljs code-wrapper"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></div></td><td class="code"><div class="hljs code-wrapper"><pre><code class="hljs pgsql"><span class="hljs-keyword">class</span> Solution &#123;<br>    <span class="hljs-built_in">public</span> <span class="hljs-type">int</span> longestValidParentheses(String s) &#123;<br>        Stack&lt;<span class="hljs-type">Integer</span>&gt; st = <span class="hljs-built_in">new</span> Stack&lt;<span class="hljs-type">Integer</span>&gt;();<br>        <span class="hljs-type">int</span> ans = <span class="hljs-number">0</span>;<br>        <span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = <span class="hljs-number">0</span> ,start = <span class="hljs-number">0</span>;i &lt; s.length();i ++)<br>        &#123;<br>            <span class="hljs-keyword">if</span>( s.charAt(i) == <span class="hljs-string">&#x27;(&#x27;</span>) st.<span class="hljs-keyword">add</span>(i);<br>            <span class="hljs-keyword">else</span><br>            &#123;<br>                <span class="hljs-keyword">if</span>(!st.isEmpty()) <br>                &#123;<br>                    st.pop();<br>                    <span class="hljs-keyword">if</span>(st.isEmpty()) ans = Math.max(ans,i - <span class="hljs-keyword">start</span> + <span class="hljs-number">1</span>);<br>                    <span class="hljs-keyword">else</span> ans = Math.max(ans,i - st.peek());<br>                &#125;<br>                <span class="hljs-keyword">else</span> start = i + <span class="hljs-number">1</span>;<br>            &#125;<br>        &#125;<br>        <span class="hljs-keyword">return</span> ans;<br>    &#125;<br>&#125;<br></code></pre></div></td></tr></table></figure>
-
-
-
-<h3 id="具体过程如下："><a href="#具体过程如下：" class="headerlink" title="具体过程如下："></a>具体过程如下：</h3><ul>
-<li><p>用栈维护当前待匹配的左括号的位置，同时用 start 记录一个新的可能合法的子串的起始位置，初始设为0。</p>
-</li>
-<li><p>如果s[i] ==’(‘，那么把i进栈。</p>
-</li>
-<li><p>如果s[i] == ‘)’,那么弹出栈顶元素 （代表栈顶的左括号匹配到了右括号），出栈后：</p>
-</li>
-</ul>
-<p>如果栈为空，说明以当前右括号为右端点的合法括号序列的左端点为start，则更新答案 i - start + 1。</p>
-<p>如果栈不为空，说明以当前右括号为右端点的合法括号序列的左端点为栈顶元素的下一个元素，则更新答案i - st.top() 。</p>
-<p><img src="https://pic.leetcode-cn.com/1628390397-QMdXtd-file_1628390396777" srcset="/img/loading.gif" lazyload></p>
+              <p><img src="https://gitee.com/Ziki_zhouyuxin/ArticleImages/raw/master/202201272149848.png" srcset="/img/loading.gif" lazyload></p>
+<p>分布式Session实现方式：</p>
+<h2 id="1-客户端存储"><a href="#1-客户端存储" class="headerlink" title="1.客户端存储"></a>1.客户端存储</h2><p>(基于Cookie管理)</p>
+<p>这种方式每次发起请求的时候都需要将Session数据放到Cookie中传递给服务端。</p>
 <ul>
-<li><p>遇到右括号)且当前栈为空，则当前的 start 开始的子串不再可能为合法子串了，下一个合法子串的起始位置是 i + 1，更新 start = i + 1。</p>
+<li><p>优点：不需要依赖额外外部存储，不需要额外配置。</p>
 </li>
-<li><p>最后返回答案。</p>
+<li><p>缺点：不安全，易被盗取或篡改；Cookie数量和长度有限制，需要消耗更多网络带宽。</p>
 </li>
-</ul>
-<p>实现细节： 栈保存的是下标。</p>
-<h3 id="复杂度分析"><a href="#复杂度分析" class="headerlink" title="复杂度分析"></a>复杂度分析</h3><ul>
-<li><p>时间复杂度： O(n)，n 是给定字符串的长度。我们只需要遍历字符串一次即可。</p>
-</li>
-<li><p>空间复杂度： O(n)。栈的大小在最坏情况下会达到 n，因此空间复杂度为 O(n) 。</p>
+<li><p>适用场景：数据不重要、不敏感且数据量小的情况。</p>
 </li>
 </ul>
 <hr>
-<p>作者：LeetCode-Solution<br>链接：<a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/longest-valid-parentheses/">32. 最长有效括号 - 力扣（LeetCode） (leetcode-cn.com)</a><br>来源：力扣（LeetCode）<br>著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。</p>
+<h2 id="2-Session复制"><a href="#2-Session复制" class="headerlink" title="2.Session复制"></a>2.Session复制</h2><p>在支持Session复制的Web服务器上，通过修改Web服务器的配置，可以实现将Session同步到其它Web服务器上，达到每个Web服务器上都保存一致的Session。</p>
+<p><img src="https://gitee.com/Ziki_zhouyuxin/ArticleImages/raw/master/20210530174912.png" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li><p>优点：代码上不需要做支持和修改。</p>
+</li>
+<li><p>缺点：需要依赖支持的Web服务器，一旦更换成不支持的Web服务器就不能使用了，在数据量很大的情况下不仅占用网络资源，会造成服务器内存浪费。</p>
+</li>
+<li><p>适用场景：只适用于Web服务器比较少且<code>Session</code>数据量少的情况。</p>
+</li>
+<li><p>可用方案：开源方案<code>tomcat-redis-session-manager</code>。</p>
+</li>
+</ul>
+<hr>
+<h2 id="3-Session粘滞"><a href="#3-Session粘滞" class="headerlink" title="3.Session粘滞"></a>3.Session粘滞</h2><p>将用户的每次请求都通过某种方法强制·分发到某一个Web服务器上，只要这个Web服务器上存储了对应Session数据，就可以实现会话跟踪。</p>
+<ul>
+<li><p>优点：使用简单，没有额外开销。</p>
+</li>
+<li><p>缺点：一旦某个Web服务器重启或宕机，相对应的Session数据将会丢失，而且需要依赖负载均衡机制。</p>
+</li>
+<li><p>适用场景：发生故障对客户产生的影响较小；对稳定性要求不是很高的业务情景。</p>
+</li>
+<li><p>可用方案：以<code>Nginx</code>为例，在<code>upstream</code>模块配置ip_hash属性即可实现粘性Session。</p>
+</li>
+</ul>
+<figure class="highlight routeros"><table><tr><td class="gutter hljs"><div class="hljs code-wrapper"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></div></td><td class="code"><div class="hljs code-wrapper"><pre><code class="hljs routeros">upstream mycluster&#123;<br>    #这里添加的是上面启动好的两台Tomcat服务器<br>    ip_hash;#粘性Session<br>    <span class="hljs-built_in"> server </span>192.168.22.229:8080 <span class="hljs-attribute">weight</span>=1;<br>    <span class="hljs-built_in"> server </span>192.168.22.230:8080 <span class="hljs-attribute">weight</span>=1;<br>&#125;<br></code></pre></div></td></tr></table></figure>
+
+<p>利用<code>Nginx</code>服务器的反向代理，将服务器A和服务器B进行代理，然后采用<code>ip_hash</code>的负载策略，将客户端和服务器进行绑定，也就是说客户端A第一次访问的是服务器B，那么第二次访问也必然是服务器B，这样就不存在session不一致的问题了。</p>
+<p><img src="https://gitee.com/Ziki_zhouyuxin/ArticleImages/raw/master/20210530174915.png" srcset="/img/loading.gif" lazyload></p>
+<hr>
+<h2 id="4-Session集中管理"><a href="#4-Session集中管理" class="headerlink" title="4.Session集中管理"></a>4.Session集中管理</h2><p>在单独的服务器或服务器集群上使用缓存技术，如<code>Redis</code>存储Session数据，集中管理所有的Session，所有的Web服务器都从这个存储介质中存取对应的Session，实现Session共享。</p>
+<p>这也是目前企业开发用到的比较多的一种分布式<code>session</code>解决方案。</p>
+<p><img src="https://gitee.com/Ziki_zhouyuxin/ArticleImages/raw/master/20210530174917.png" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li><p>优点：可靠性高，减少Web服务器的资源开销。</p>
+</li>
+<li><p>缺点：实现上有些复杂，配置较多。</p>
+</li>
+<li><p>适用场景：Web服务器较多、要求高可用性的情况。</p>
+</li>
+<li><p>可用方案：开源方案Spring Session等。</p>
+</li>
+</ul>
+<hr>
+<p>参考：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/daofaziran/p/10933221.html">https://www.cnblogs.com/daofaziran/p/10933221.html</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/javandroid/article/details/52959105">https://blog.csdn.net/javandroid/article/details/52959105</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/3dd4e06bdfa4">https://www.jianshu.com/p/3dd4e06bdfa4</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/saoyou/p/11107488.html">https://www.cnblogs.com/saoyou/p/11107488.html</a></li>
+</ul>
 
             </div>
             <hr>
             <div>
               <div class="post-metas mb-3">
                 
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Session/">Session</a>
+                    
+                  </div>
                 
               </div>
               
@@ -319,18 +358,12 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2022/03/17/%E7%AE%A1%E7%90%86%E5%88%86%E5%B8%83%E5%BC%8FSession%E7%9A%84%E5%87%A0%E7%A7%8D%E6%96%B9%E5%BC%8F/">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">管理分布式Session的几种方式</span>
-                        <span class="visible-mobile">Previous</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2021/08/29/Stream%20ToMap(Collectors.toMap)/">
-                        <span class="hidden-mobile">Stream ToMap(Collectors.toMap)</span>
+                      <a href="/2021/08/29/%E6%9C%80%E9%95%BF%E6%9C%89%E6%95%88%E6%8B%AC%E5%8F%B7/">
+                        <span class="hidden-mobile">最长有效括号</span>
                         <span class="visible-mobile">Next</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
