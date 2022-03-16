@@ -16,17 +16,17 @@
   <meta name="description" content="">
   <meta name="author" content="Ziki">
   <meta name="keywords" content="">
-  <meta name="description" content="##线程池生命周期及状态  RUNNING: 接收新任务，也处理队列任务   SHUTDOWN: 不接收新任务，但是处理队列任务   STOP:   不接收新任务，不处理队列任务并且中断正在进行的任务   TIDYING: 所有任务都终止，workerCount为零，线程状态转为TIDYING，将运行terminated()方法   TERMINATED: terminated() 方法执行完毕">
+  <meta name="description" content="[TOC] 线程池生命周期及状态 RUNNING: 接收新任务，也处理队列任务   SHUTDOWN: 不接收新任务，但是处理队列任务   STOP:   不接收新任务，不处理队列任务并且中断正在进行的任务   TIDYING: 所有任务都终止，workerCount为零，线程状态转为TIDYING，将运行terminated()方法   TERMINATED: terminated() 方法执行">
 <meta property="og:type" content="article">
 <meta property="og:title" content="线程池ThreadPoolExecutor分析">
 <meta property="og:url" content="https://zikiwork.github.io/2022/03/17/%E7%BA%BF%E7%A8%8B%E6%B1%A0ThreadPoolExecutor%E5%88%86%E6%9E%90/index.html">
 <meta property="og:site_name" content="Ziki Work">
-<meta property="og:description" content="##线程池生命周期及状态  RUNNING: 接收新任务，也处理队列任务   SHUTDOWN: 不接收新任务，但是处理队列任务   STOP:   不接收新任务，不处理队列任务并且中断正在进行的任务   TIDYING: 所有任务都终止，workerCount为零，线程状态转为TIDYING，将运行terminated()方法   TERMINATED: terminated() 方法执行完毕">
+<meta property="og:description" content="[TOC] 线程池生命周期及状态 RUNNING: 接收新任务，也处理队列任务   SHUTDOWN: 不接收新任务，但是处理队列任务   STOP:   不接收新任务，不处理队列任务并且中断正在进行的任务   TIDYING: 所有任务都终止，workerCount为零，线程状态转为TIDYING，将运行terminated()方法   TERMINATED: terminated() 方法执行">
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="https://gitee.com/Cai_Programmer/pic-go/raw/master/9e743837-29f4-4510-bcce-44542ad8f338.jpg">
 <meta property="og:image" content="https://gitee.com/Cai_Programmer/pic-go/raw/master/2f0a2292-8c67-4d5a-9d36-c95570607447.jpg">
 <meta property="article:published_time" content="2022-03-16T16:21:01.000Z">
-<meta property="article:modified_time" content="2022-03-16T16:22:05.551Z">
+<meta property="article:modified_time" content="2022-03-16T16:25:30.525Z">
 <meta property="article:author" content="Ziki">
 <meta property="article:tag" content="Java">
 <meta name="twitter:card" content="summary_large_image">
@@ -266,8 +266,8 @@
             <h1 style="display: none">线程池ThreadPoolExecutor分析</h1>
             
             <div class="markdown-body">
-              <p>##线程池生命周期及状态</p>
-<blockquote>
+              <p>[TOC]</p>
+<h2 id="线程池生命周期及状态"><a href="#线程池生命周期及状态" class="headerlink" title="线程池生命周期及状态"></a>线程池生命周期及状态</h2><blockquote>
 <p>RUNNING: 接收新任务，也处理队列任务</p>
 </blockquote>
 <blockquote>
@@ -282,8 +282,7 @@
 <blockquote>
 <p>TERMINATED: terminated() 方法执行完毕</p>
 </blockquote>
-<p>##任务执行流程</p>
-<blockquote>
+<h2 id="任务执行流程"><a href="#任务执行流程" class="headerlink" title="任务执行流程"></a>任务执行流程</h2><blockquote>
 <p>execute(Runnable command) –&gt; addWorker(Runnable firstTask,boolean core) –&gt;runWorker(Worker w)</p>
 </blockquote>
 <ul>

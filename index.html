@@ -219,8 +219,8 @@
           
             
           
-          ##线程池生命周期及状态
-
+          [TOC]
+线程池生命周期及状态
 RUNNING: 接收新任务，也处理队列任务
 
 
@@ -233,8 +233,7 @@ STOP:   不接收新任务，不处理队列任务并且中断正在进行的任
 TIDYING: 所有任务都终止，workerCount为零，线程状态转为TIDYING，将运行terminated()方法
 
 
-TERMINATED: terminated() 方法执行完毕
-
+TERMINATED: terminated() 方法执行
         </a>
       </p>
 
