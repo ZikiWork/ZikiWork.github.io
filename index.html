@@ -200,6 +200,70 @@
     
     
       <div class="col-12 col-md-4 m-auto index-img">
+        <a href="/2022/03/17/%E7%BA%BF%E7%A8%8B%E6%B1%A0ThreadPoolExecutor%E5%88%86%E6%9E%90/" target="_self">
+          <img src="https://ziki-1257330709.cos.ap-chengdu.myqcloud.com/png/img_5.png" alt="线程池ThreadPoolExecutor分析">
+        </a>
+      </div>
+    
+    <article class="col-12 col-md-8 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2022/03/17/%E7%BA%BF%E7%A8%8B%E6%B1%A0ThreadPoolExecutor%E5%88%86%E6%9E%90/" target="_self">
+          线程池ThreadPoolExecutor分析
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2022/03/17/%E7%BA%BF%E7%A8%8B%E6%B1%A0ThreadPoolExecutor%E5%88%86%E6%9E%90/" target="_self">
+          
+          
+            
+          
+          ##线程池生命周期及状态
+
+RUNNING: 接收新任务，也处理队列任务
+
+
+SHUTDOWN: 不接收新任务，但是处理队列任务
+
+
+STOP:   不接收新任务，不处理队列任务并且中断正在进行的任务
+
+
+TIDYING: 所有任务都终止，workerCount为零，线程状态转为TIDYING，将运行terminated()方法
+
+
+TERMINATED: terminated() 方法执行完毕
+
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2022-03-17 00:21" pubdate>
+              2022-03-17
+            </time>
+          </div>
+        
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Java/">Java</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+      <div class="col-12 col-md-4 m-auto index-img">
         <a href="/2022/03/17/Mysql-%E8%A1%A8%E6%8C%89%E6%97%B6%E9%97%B4%E5%88%86%E5%8C%BA%EF%BC%88%E5%86%85%E9%99%84%E8%84%9A%E6%9C%AC%EF%BC%89/" target="_self">
           <img src="https://ziki-1257330709.cos.ap-chengdu.myqcloud.com/png/img_8.png" alt="Mysql 表按时间分区（内附脚本）">
         </a>
