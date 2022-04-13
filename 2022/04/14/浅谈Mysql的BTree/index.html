@@ -1,0 +1,588 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=&#34;auto&#34;>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="Ziki">
+  <meta name="keywords" content="">
+  <meta name="description" content="浅谈MySQL的BTREE索引MySQL的MyISAM、InnoDB引擎默认均使用B+树索引（查询时都显示为“BTREE”），本文讨论两个问题：  为什么MySQL等主流数据库选择B+树的索引结构？ 如何基于索引结构，理解常见的MySQL索引优化思路？  为什么索引无法全部装入内存索引结构的选择基于这样一个性质：大数据量时，索引无法全部装入内存。 为什么索引无法全部装入内存？假设使用树结构组织索引">
+<meta property="og:type" content="article">
+<meta property="og:title" content="浅谈Mysql的BTree">
+<meta property="og:url" content="https://zikiwork.github.io/2022/04/14/%E6%B5%85%E8%B0%88Mysql%E7%9A%84BTree/index.html">
+<meta property="og:site_name" content="Ziki Work">
+<meta property="og:description" content="浅谈MySQL的BTREE索引MySQL的MyISAM、InnoDB引擎默认均使用B+树索引（查询时都显示为“BTREE”），本文讨论两个问题：  为什么MySQL等主流数据库选择B+树的索引结构？ 如何基于索引结构，理解常见的MySQL索引优化思路？  为什么索引无法全部装入内存索引结构的选择基于这样一个性质：大数据量时，索引无法全部装入内存。 为什么索引无法全部装入内存？假设使用树结构组织索引">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://raw.githubusercontent.com/monkeysayhi/HexoBlogOnGithub/master/qiniu/static/images/%E6%B5%85%E8%B0%88MySQL%E7%9A%84B%E6%A0%91%E7%B4%A2%E5%BC%95%E4%B8%8E%E7%B4%A2%E5%BC%95%E4%BC%98%E5%8C%96/B%E6%A0%91.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/monkeysayhi/HexoBlogOnGithub/master/qiniu/static/images/%E6%B5%85%E8%B0%88MySQL%E7%9A%84B%E6%A0%91%E7%B4%A2%E5%BC%95%E4%B8%8E%E7%B4%A2%E5%BC%95%E4%BC%98%E5%8C%96/B+%E6%A0%91.png">
+<meta property="article:published_time" content="2022-04-13T16:42:43.000Z">
+<meta property="article:modified_time" content="2022-04-13T16:43:34.077Z">
+<meta property="article:author" content="Ziki">
+<meta property="article:tag" content="Mysql">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/monkeysayhi/HexoBlogOnGithub/master/qiniu/static/images/%E6%B5%85%E8%B0%88MySQL%E7%9A%84B%E6%A0%91%E7%B4%A2%E5%BC%95%E4%B8%8E%E7%B4%A2%E5%BC%95%E4%BC%98%E5%8C%96/B%E6%A0%91.png">
+  
+  <title>浅谈Mysql的BTree - Ziki Work</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4.0.0/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10.7.2/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+  
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"zikiwork.github.io","root":"/","version":"1.8.11","typing":{"enable":true,"typeSpeed":60,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":2,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":true,"offset_factor":2},"web_analytics":{"enable":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Ziki Work</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                Home
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                Archives
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                Categories
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                Tags
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                About
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                Links
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="浅谈Mysql的BTree">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-author" aria-hidden="true"></i>
+      Ziki
+    </span>
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-04-14 00:42" pubdate>
+        April 14, 2022 am
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      4.5k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      14 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- 不蒜子统计文章PV -->
+      <span id="busuanzi_container_page_pv" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="busuanzi_value_page_pv"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">浅谈Mysql的BTree</h1>
+            
+            <div class="markdown-body">
+              <h3 id="浅谈MySQL的BTREE索引"><a href="#浅谈MySQL的BTREE索引" class="headerlink" title="浅谈MySQL的BTREE索引"></a>浅谈MySQL的BTREE索引</h3><p>MySQL的MyISAM、InnoDB引擎默认均使用B+树索引（查询时都显示为“BTREE”），本文讨论两个问题：</p>
+<ul>
+<li>为什么MySQL等主流数据库选择B+树的索引结构？</li>
+<li>如何基于索引结构，理解常见的MySQL索引优化思路？</li>
+</ul>
+<h3 id="为什么索引无法全部装入内存"><a href="#为什么索引无法全部装入内存" class="headerlink" title="为什么索引无法全部装入内存"></a>为什么索引无法全部装入内存</h3><p>索引结构的选择基于这样一个性质：<strong>大数据量时，索引无法全部装入内存</strong>。</p>
+<p>为什么索引无法全部装入内存？假设使用树结构组织索引，简单估算一下：</p>
+<ul>
+<li>假设单个索引节点12B，1000w个数据行，unique索引，则叶子节点共占约100MB，整棵树最多200MB。</li>
+<li>假设一行数据占用200B，则数据共占约2G。</li>
+</ul>
+<p>假设索引存储在内存中。也就是说，每在物理盘上保存2G的数据，就要占用200MB的内存，*<code>索引:数据的占用比</code>约为1/10<em>。1/10的占用比算不算大呢？物理盘比内存廉价的多，以一台内存16G硬盘1T的服务器为例，</em>如果要存满1T的硬盘，至少需要100G的内存*，远大于16G。</p>
+<p>考虑到一个表上可能有多个索引、联合索引、数据行占用更小等情况，实际的占用比通常大于1/10，某些时候能达到1/3。<strong>在基于索引的存储架构中，<code>索引:数据的占用比</code>过高，因此，索引无法全部装入内存</strong>。</p>
+<h3 id="其他结构的问题"><a href="#其他结构的问题" class="headerlink" title="其他结构的问题"></a>其他结构的问题</h3><p>由于无法装入内存，则必然依赖磁盘（或SSD）存储。而内存的读写速度是磁盘的成千上万倍（与具体实现有关），因此，核心问题是“<strong>如何减少磁盘读写次数</strong>”。</p>
+<p>首先不考虑页表机制，假设每次读、写都直接穿透到磁盘，那么：</p>
+<ul>
+<li>线性结构：读/写平均O(n)次</li>
+<li>二叉搜索树（BST）：读/写平均O(log2(n))次；如果树不平衡，则最差读/写O(n)次</li>
+<li>自平衡二叉搜索树（AVL）：在BST的基础上加入了自平衡算法，读/写最大O(log2(n))次</li>
+<li>红黑树（RBT）：另一种自平衡的查找树，读/写最大O(log2(n))次</li>
+</ul>
+<p>BST、AVL、RBT很好的将读写次数从O(n)优化到O(log2(n))；其中，AVL和RBT都比BST多了自平衡的功能，将读写次数降到最大O(log2(n))。</p>
+<p>假设使用自增主键，则主键本身是有序的，树结构的读写次数能够优化到树高，树高越低读写次数越少；自平衡保证了树结构的稳定。如果想进一步优化，可以引入B树和B+树。</p>
+<h3 id="B树解决了什么问题"><a href="#B树解决了什么问题" class="headerlink" title="B树解决了什么问题"></a>B树解决了什么问题</h3><blockquote>
+<p>很多文章将B树误称为B-（减）树，这可能是对其英文名“B-Tree”的误解（更有甚者，将B树称为二叉树或二叉搜索树）。特别是与B+树一起讲的时候。想当然的认为有B+（加）树就有B-（减）树，实际上B+树的英文名是“B+-Tree”。</p>
+</blockquote>
+<p>如果抛开维护操作，那么B树就像一棵“m叉搜索树”（m是子树的最大个数），时间复杂度为O(logm(n))。然而，B树设计了一种高效简单的维护操作，使B树的深度维持在约log(ceil(m/2))(n)~logm(n)之间，<strong>大大降低树高</strong>。</p>
+<p><img src="https://raw.githubusercontent.com/monkeysayhi/HexoBlogOnGithub/master/qiniu/static/images/%E6%B5%85%E8%B0%88MySQL%E7%9A%84B%E6%A0%91%E7%B4%A2%E5%BC%95%E4%B8%8E%E7%B4%A2%E5%BC%95%E4%BC%98%E5%8C%96/B%E6%A0%91.png" srcset="/img/loading.gif" lazyload alt="B树"></p>
+<blockquote>
+<p>再次强调：</p>
+<p>不要纠结于时间复杂度，与单纯的算法不同，磁盘IO次数才是更大的影响因素。读者可以推导看看，B树与AVL的时间复杂度是相同的，但由于B树的层数少，磁盘IO次数少，实践中B树的性能要优于AVL等二叉树。</p>
+</blockquote>
+<p>同二叉搜索树类似，每个节点存储了多个key和子树，子树与key按顺序排列。</p>
+<p>页表的目的是扩展内存+加速磁盘读写。一个页（Page）通常4K（等于磁盘数据块block的大小，见inode与block的分析），从磁盘读写的角度出发，操作系统每次以页为单位将内容从磁盘加载到内存（以摊分寻道成本），修改页后，再择期将该页写回磁盘。考虑到页表的良好性质，可以使每个节点的大小约等于一个页（使m非常大），这每次加载的一个页就能完整覆盖一个节点，以便选择下一层子树；对子树同理。对于页表来说，AVL（或RBT）相当于1个key+2个子树的B树，由于逻辑上相邻的节点，物理上通常不相邻，因此，读入一个4k页，页面内绝大部分空间都将是无效数据。</p>
+<p>假设key、子树节点指针均占用4B，则B树节点最大<code>m * (4 + 4) = 8m B</code>；页面大小4KB。则<code>m = 4 * 1024 / 8 = 512</code>，一个512叉的B树，1000w的数据，深度最大 <code>log(512/2)(10^7) = 3.02 ~= 4</code>。对比二叉树如AVL的深度为<code>log(2)(10^7) = 23.25 ~= 24</code>，相差了5倍以上。震惊！B树索引深度竟然如此！</p>
+<p>另外，B树<strong>对局部性原理非常友好</strong>。如果key比较小（比如上面4B的自增key），则除了页表的加成，缓存还能进一步预读加速。美滋滋~</p>
+<h3 id="B-树解决了什么问题"><a href="#B-树解决了什么问题" class="headerlink" title="B+树解决了什么问题"></a>B+树解决了什么问题</h3><h3 id="B树的剩余问题"><a href="#B树的剩余问题" class="headerlink" title="B树的剩余问题"></a>B树的剩余问题</h3><p>然而，如果要实际应用到数据库的索引中，B树还有一些问题：</p>
+<ol>
+<li>未定位数据行</li>
+<li>无法处理范围查询</li>
+</ol>
+<h4 id="问题1"><a href="#问题1" class="headerlink" title="问题1"></a>问题1</h4><p>数据表的记录有多个字段，仅仅定位到主键是不够的，还需要定位到数据行。有3个方案解决：</p>
+<ol>
+<li>直接将key对应的数据行（可能对应多行）存储在节点中。</li>
+<li>数据行单独存储；节点中增加一个字段，定位key对应数据行的位置。</li>
+<li>修改key与子树的判断逻辑，使子树大于等于上一key小于下一key，最终所有访问都将落于叶子节点；叶子节点中直接存储数据行或数据行的位置。</li>
+</ol>
+<p>方案1中，数据行通常非常大，存储数据行将减少页面中的子树个数，m减小树高增大。假设数据行占用200B，可忽略组织B树的指针，则新的<code>m = 4 * 1024 / 200 = 20.48 ~= 21</code>，深度最大 <code>log(21/2)(10^7) ~= 7</code>。增加了一倍以上的IO，不考虑。</p>
+<p>方案2中，节点增加了一个字段。假设是4B的指针，则新的<code>m = 4 * 1024 / 12 = 341.33 ~= 341</code>，深度最大 <code>log(341/2)(10^7) = 3.14 ~= 4</code>。与3差别不大，可以考虑。</p>
+<p>方案3的节点m与深度不变，但时间复杂度变为稳定的O(logm(n))。考虑。</p>
+<h4 id="问题2"><a href="#问题2" class="headerlink" title="问题2"></a>问题2</h4><p>实际业务中，范围查询的频率非常高，B树只能定位到一个索引位置（可能对应多行），很难处理范围查询。给出2种方案：</p>
+<ol>
+<li>不改动：查询的时候先查到左界，再查到右界，然后DFS（或BFS）遍历左界、右界之间的节点。</li>
+<li>在“问题1-方案3”的基础上，由于所有数据行都存储在叶子节点，B树的叶子节点本身也是有序的，可以增加一个指针，指向当前叶子节点按主键顺序的下一叶子节点；查询时先查到左界，再查到右界，然后从左界到有界线性遍历。</li>
+</ol>
+<p>乍一看感觉方案1比方案2好——时间复杂度和常数项都一样，方案1还不需要改动。但是别忘了局部性原理，不管节点中存储的是数据行还是数据行位置，方案2的好处在于，叶子节点连续存储，对页表和缓存友好。而方案1则面临节点逻辑相邻、物理分离的缺点。</p>
+<h3 id="引出B-树"><a href="#引出B-树" class="headerlink" title="引出B+树"></a>引出B+树</h3><p>综上，问题1的方案2与问题2的方案1可整合为一种方案（基于B树的索引），问题1的方案3与问题2的方案2可整合为一种（基于B+树的索引）。实际上，数据库、文件系统有些采用了B树，有些采用B+树。</p>
+<p>包括MySQL在内的主流数据库多选择了B+树。即：</p>
+<p><img src="https://raw.githubusercontent.com/monkeysayhi/HexoBlogOnGithub/master/qiniu/static/images/%E6%B5%85%E8%B0%88MySQL%E7%9A%84B%E6%A0%91%E7%B4%A2%E5%BC%95%E4%B8%8E%E7%B4%A2%E5%BC%95%E4%BC%98%E5%8C%96/B+%E6%A0%91.png" srcset="/img/loading.gif" lazyload alt="B+树"></p>
+<p>主要变动如上所述：</p>
+<ul>
+<li>修改key与子树的组织逻辑，将索引访问都落到叶子节点</li>
+<li>按顺序将叶子节点串起来（方便范围查询）</li>
+</ul>
+<h3 id="B树和B-树的增、删、查过程"><a href="#B树和B-树的增、删、查过程" class="headerlink" title="B树和B+树的增、删、查过程"></a>B树和B+树的增、删、查过程</h3><p>B树的增删过程暂时可参考<a target="_blank" rel="noopener" href="http://blog.csdn.net/v_JULY_v/article/details/6530142/">从B树、B+树、B*树谈到R 树</a>的“6、B树的插入、删除操作”小节，B+树的增删同理。此处暂不赘述。</p>
+<h3 id="Mysql索引优化"><a href="#Mysql索引优化" class="headerlink" title="Mysql索引优化"></a>Mysql索引优化</h3><p>根据B+树的性质，很容易理解各种常见的MySQL索引优化思路。</p>
+<blockquote>
+<p>暂不考虑不同引擎之间的区别。</p>
+</blockquote>
+<h4 id="优先使用自增key作为主键"><a href="#优先使用自增key作为主键" class="headerlink" title="优先使用自增key作为主键"></a>优先使用自增key作为主键</h4><p>前面的分析中，假设用4B的自增key作为索引，则m可达到512，层高仅有3。使用自增的key有两个好处：</p>
+<ol>
+<li>自增key一般为int等整数型，key比较紧凑，这样m可以非常大，而且索引占用空间小。最极端的例子，如果使用50B的varchar（包括长度），那么<code>m = 4 * 1024 / 54m = 75.85 ~= 76</code>，深度最大 <code>log(76/2)(10^7) = 4.43 ~= 5</code>，再加上cache缺失、字符串比较的成本，时间成本增加较大。同时，key由4B增长到50B，整棵索引树的空间占用增长也是极为恐怖的（如果二级索引使用主键定位数据行，则空间增长更加严重）。</li>
+<li>自增的性质使得新数据行的插入请求必然落到索引树的最右侧，发生节点分裂的频率较低，理想情况下，索引树可以达到“满”的状态。索引树满，一方面层高更低，一方面删除节点时发生节点合并的频率也较低。</li>
+</ol>
+<h4 id="最左前缀匹配"><a href="#最左前缀匹配" class="headerlink" title="最左前缀匹配"></a>最左前缀匹配</h4><p>索引可以简单如一个列(a)，也可以复杂如多个列(a, b, c, d)，即<code>联合索引</code>。如果是联合索引，那么key也由多个列组成，同时，索引只能用于查找key是否存在（相等），遇到范围查询(&gt;、&lt;、between、like左匹配)等就不能进一步匹配了，后续退化为线性查找。因此，列的排列顺序决定了可命中索引的列数。</p>
+<p>如有索引(a, b, c, d)，查询条件<code>a = 1 and b = 2 and c &gt; 3 and d = 4</code>，则会在每个节点依次命中a、b、c，无法命中d。也就是最左前缀匹配原则。</p>
+<h4 id="、in自动优化顺序"><a href="#、in自动优化顺序" class="headerlink" title="=、in自动优化顺序"></a>=、in自动优化顺序</h4><p>不需要考虑=、in等的顺序，mysql会自动优化这些条件的顺序，以匹配尽可能多的索引列。</p>
+<p>如有索引(a, b, c, d)，查询条件<code>c &gt; 3 and b = 2 and a = 1 and d &lt; 4</code>与<code>a = 1 and c &gt; 3 and b = 2 and d &lt; 4</code>等顺序都是可以的，MySQL会自动优化为<code>a = 1 and b = 2 and c &gt; 3 and d &lt; 4</code>，依次命中a、b、c。</p>
+<h4 id="索引列不能参与计算"><a href="#索引列不能参与计算" class="headerlink" title="索引列不能参与计算"></a>索引列不能参与计算</h4><p>有索引列参与计算的查询条件对索引不友好（甚至无法使用索引），如<code>from_unixtime(create_time) = &#39;2014-05-29&#39;</code>。</p>
+<p>原因很简单，如何在节点中查找到对应key？如果线性扫描，则每次都需要重新计算，成本太高；如果二分查找，则需要针对from_unixtime方法确定大小关系。</p>
+<p>因此，索引列不能参与计算。上述<code>from_unixtime(create_time) = &#39;2014-05-29&#39;</code>语句应该写成<code>create_time = unix_timestamp(&#39;2014-05-29&#39;)</code>。</p>
+<h4 id="能扩展就不要新建索引"><a href="#能扩展就不要新建索引" class="headerlink" title="能扩展就不要新建索引"></a>能扩展就不要新建索引</h4><p>如果已有索引(a)，想建立索引(a, b)，尽量选择修改索引(a)为索引(a, b)。</p>
+<p>新建索引的成本很容易理解。而基于索引(a)修改为索引(a, b)的话，MySQL可以直接在索引a的B+树上，经过分裂、合并等修改为索引(a, b)。</p>
+<h4 id="不需要建立前缀有包含关系的索引"><a href="#不需要建立前缀有包含关系的索引" class="headerlink" title="不需要建立前缀有包含关系的索引"></a>不需要建立前缀有包含关系的索引</h4><p>如果已有索引(a, b)，则不需要再建立索引(a)，但是如果有必要，则仍然需考虑建立索引(b)。</p>
+<h4 id="选择区分度高的列作索引"><a href="#选择区分度高的列作索引" class="headerlink" title="选择区分度高的列作索引"></a>选择区分度高的列作索引</h4><p>很容易理解。如，用性别作索引，那么索引仅能将1000w行数据划分为两部分（如500w男，500w女），索引几乎无效。</p>
+<p><code>区分度</code>的公式是<code>count(distinct &lt;col&gt;) / count(*)</code>，表示字段不重复的比例，比例越大区分度越好。唯一键的区分度是1，而一些状态、性别字段可能在大数据面前的区分度趋近于0。</p>
+<blockquote>
+<p>这个值很难确定，一般需要join的字段要求是0.1以上，即平均1条扫描10条记录。</p>
+</blockquote>
+<hr>
+<p>参考：</p>
+<ul>
+<li><p><a target="_blank" rel="noopener" href="https://blog.csdn.net/ctflq/article/details/124119436">MySQL索引优化及性能调优</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="http://blog.csdn.net/v_JULY_v/article/details/6530142/">从B树、B+树、B*树谈到R 树</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://tech.meituan.com/">美团技术团队 (meituan.com)</a></p>
+</li>
+</ul>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Mysql/">Mysql</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/03/17/%E7%BA%BF%E7%A8%8B%E6%B1%A0ThreadPoolExecutor%E5%88%86%E6%9E%90/">
+                        <span class="hidden-mobile">线程池ThreadPoolExecutor分析</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+              <!-- Comments -->
+              <article class="comments" id="comments">
+                
+                  
+                
+                
+
+              </article>
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;TOC</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://www.zhouyuxin.net" target="_blank" rel="nofollow noopener"><span>Ziki Work</span></a> 
+  </div>
+  
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  
+    
+      <script  src="/js/img-lazyload.js" ></script>
+    
+  
+
+
+
+  
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/tocbot@4.12.3/dist/tocbot.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4.3.1/anchor.min.js" ></script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js" ></script>
+
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>
